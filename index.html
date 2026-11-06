@@ -1,886 +1,697 @@
 <!DOCTYPE html>
-<html lang="pt-BR" class="h-full">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Controle Financeiro Familiar</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Controle Financeiro Familiar - macOS Style</title>
     <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Phosphor Icons para ícones estilo iOS -->
-    <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    <!-- Fonte Inter para visual próximo ao San Francisco / Apple Design -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'SF Pro Display', 'sans-serif'],
-                    },
-                    colors: {
-                        apple: {
-                            bg: '#F2F2F7',
-                            card: 'rgba(255, 255, 255, 0.75)',
-                            border: 'rgba(255, 255, 255, 0.6)',
-                            blue: '#007AFF',
-                            green: '#34C759',
-                            red: '#FF3B30',
-                            orange: '#FF9500',
-                            purple: '#AF52DE',
-                            gray: '#8E8E93',
-                            darkText: '#1C1C1E',
-                            secondaryText: '#636366'
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-
     <style>
-        /* Efeito de Vidro Fosco macOS (Glassmorphism Original) */
-        .mac-glass {
-            background: rgba(255, 255, 255, 0.75);
-            backdrop-filter: blur(25px);
-            -webkit-backdrop-filter: blur(25px);
-            border: 1px solid rgba(255, 255, 255, 0.6);
-            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+        :root {
+            --bg-canvas: #e5e5ea;
+            --window-bg: rgba(246, 246, 246, 0.85);
+            --card-bg: rgba(255, 255, 255, 0.65);
+            --card-border: rgba(255, 255, 255, 0.9);
+            --text-main: #1d1d1f;
+            --text-sec: #86868b;
+            --accent-blue: #007aff;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --shadow-window: 0 20px 40px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);
+            --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.04);
+            --radius-window: 20px;
+            --radius-card: 14px;
         }
 
-        .mac-nav {
-            background: rgba(246, 246, 246, 0.85);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif;
+            -webkit-font-smoothing: antialiased;
         }
 
-        /* Animações de Transição */
-        .tab-content {
-            display: none;
-            opacity: 0;
-            transition: opacity 0.25s ease-in-out;
-        }
-        .tab-content.active {
-            display: block;
-            opacity: 1;
+        body {
+            background-color: var(--bg-canvas);
+            background-image: radial-gradient(circle at 50% 0%, rgba(255,255,255,0.8) 0%, transparent 75%);
+            min-height: 100vh;
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
         }
 
-        /* Personalização da Barra de Rolagem estilo macOS */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
+        /* macOS Window Frame */
+        .mac-window {
+            width: 100%;
+            max-width: 1140px;
+            background: var(--window-bg);
+            backdrop-filter: blur(25px) saturate(180%);
+            -webkit-backdrop-filter: blur(25px) saturate(180%);
+            border-radius: var(--radius-window);
+            box-shadow: var(--shadow-window);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
         }
-        ::-webkit-scrollbar-track {
+
+        /* Window Header Bar */
+        .window-header {
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .traffic-lights {
+            display: flex;
+            gap: 8px;
+        }
+
+        .light {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        .light.close { background: #ff5f56; border: 0.5px solid #e0443e; }
+        .light.minimize { background: #ffbd2e; border: 0.5px solid #dea123; }
+        .light.maximize { background: #27c93f; border: 0.5px solid #1aab29; }
+
+        .window-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-sec);
+            letter-spacing: -0.2px;
+        }
+
+        /* Segmented Control Navigation */
+        .segmented-control {
+            display: flex;
+            background: rgba(0, 0, 0, 0.06);
+            padding: 3px;
+            border-radius: 9px;
+            gap: 2px;
+        }
+
+        .segment-btn {
+            border: none;
             background: transparent;
+            padding: 6px 16px;
+            font-size: 13px;
+            font-weight: 500;
+            border-radius: 7px;
+            cursor: pointer;
+            color: var(--text-main);
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
         }
-        ::-webkit-scrollbar-thumb {
-            background: rgba(0, 0, 0, 0.15);
-            border-radius: 99px;
+
+        .segment-btn.active {
+            background: #ffffff;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.12), 0 0 2px rgba(0,0,0,0.08);
+            font-weight: 600;
         }
-        ::-webkit-scrollbar-thumb:hover {
-            background: rgba(0, 0, 0, 0.25);
+
+        /* Main Window Body */
+        .window-body {
+            padding: 28px;
+        }
+
+        .page {
+            display: none;
+            flex-direction: column;
+            gap: 24px;
+            animation: macFade 0.25s ease-out;
+        }
+
+        .page.active {
+            display: flex;
+        }
+
+        @keyframes macFade {
+            from { opacity: 0; transform: scale(0.995); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        /* Cards */
+        .mac-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-card);
+            padding: 20px 24px;
+            box-shadow: var(--shadow-card);
+        }
+
+        /* Metric Cards Grid */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .metric-box {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .metric-box label {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-sec);
+        }
+
+        .metric-box h2 {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .metric-box.income h2 { color: var(--accent-green); }
+        .metric-box.expense h2 { color: var(--accent-red); }
+        .metric-box.balance h2 { color: var(--accent-blue); }
+        .metric-box.car h2 { color: var(--accent-orange); }
+
+        /* Form */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 14px;
+            margin-top: 14px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .input-group label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-sec);
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        input, select {
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(0, 0, 0, 0.12);
+            padding: 9px 12px;
+            border-radius: 9px;
+            font-size: 13px;
+            color: var(--text-main);
+            outline: none;
+            transition: all 0.15s ease;
+        }
+
+        input:focus, select:focus {
+            background: #ffffff;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.2);
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            margin-top: 18px;
+            cursor: pointer;
+            color: var(--text-main);
+        }
+
+        .mac-btn {
+            background: var(--accent-blue);
+            color: #ffffff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 9px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            margin-top: 18px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .mac-btn:hover {
+            opacity: 0.92;
+            transform: translateY(-1px);
+        }
+
+        /* Table */
+        .table-wrapper {
+            overflow-x: auto;
+            margin-top: 14px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            text-align: left;
+        }
+
+        th {
+            color: var(--text-sec);
+            font-weight: 600;
+            padding: 10px 14px;
+            border-bottom: 1px solid rgba(0,0,0,0.08);
+            font-size: 11px;
+            text-transform: uppercase;
+        }
+
+        td {
+            padding: 12px 14px;
+            border-bottom: 1px solid rgba(0,0,0,0.04);
+        }
+
+        .tag {
+            padding: 3px 8px;
+            border-radius: 5px;
+            font-size: 11px;
+            font-weight: 600;
+            display: inline-block;
+        }
+        .tag.receita { background: rgba(52, 199, 89, 0.15); color: var(--accent-green); }
+        .tag.despesa { background: rgba(255, 59, 48, 0.15); color: var(--accent-red); }
+        .tag.fixa { background: rgba(175, 82, 222, 0.15); color: var(--accent-purple); }
+
+        /* Status Toggle Buttons */
+        .status-btn {
+            border: none;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .status-btn.pago { background: rgba(52, 199, 89, 0.15); color: var(--accent-green); }
+        .status-btn.pendente { background: rgba(255, 149, 0, 0.15); color: var(--accent-orange); }
+        .status-btn.vencido { background: rgba(255, 59, 48, 0.15); color: var(--accent-red); }
+
+        .btn-delete {
+            background: transparent;
+            border: none;
+            color: var(--accent-red);
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        /* Charts Layout */
+        .charts-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            gap: 20px;
+        }
+
+        .chart-box {
+            height: 340px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .window-header { flex-direction: column; gap: 12px; align-items: flex-start; }
+            .charts-container { grid-template-columns: 1fr; }
         }
     </style>
 </head>
-<body class="bg-[#F2F2F7] text-apple-darkText font-sans min-h-full antialiased pb-12">
+<body>
 
-    <!-- Header / Navbar estilo macOS Window Bar (Design Original) -->
-    <header class="sticky top-0 z-50 mac-nav border-b border-black/5 mb-6 px-4 py-3 shadow-xs">
-        <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-            
-            <!-- Título e Controles da Janela do Mac -->
-            <div class="flex items-center gap-3">
-                <div class="flex items-center gap-1.5">
-                    <span class="w-3 h-3 rounded-full bg-[#FF5F56] border border-black/10 inline-block"></span>
-                    <span class="w-3 h-3 rounded-full bg-[#FFBD2E] border border-black/10 inline-block"></span>
-                    <span class="w-3 h-3 rounded-full bg-[#27C93F] border border-black/10 inline-block"></span>
-                </div>
-                <h1 class="font-semibold text-lg tracking-tight text-slate-800 ml-2 flex items-center gap-2">
-                    <i class="ph-bold ph-wallet text-apple-blue"></i>
-                    Controle Financeiro
-                </h1>
+<div class="mac-window">
+    <!-- Header estilo macOS -->
+    <div class="window-header">
+        <div style="display: flex; align-items: center; gap: 16px;">
+            <div class="traffic-lights">
+                <div class="light close"></div>
+                <div class="light minimize"></div>
+                <div class="light maximize"></div>
             </div>
-
-            <!-- Segmented Controls (Abas estilo iOS) -->
-            <div class="bg-black/5 p-1 rounded-xl flex items-center gap-1 w-full sm:w-auto">
-                <button id="tab-btn-1" onclick="switchTab('tab-1')" 
-                    class="tab-btn flex-1 sm:flex-none px-5 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all shadow-xs bg-white text-apple-darkText">
-                    <i class="ph-bold ph-list-plus mr-1.5"></i>Lançamentos & Resumo
-                </button>
-                <button id="tab-btn-2" onclick="switchTab('tab-2')" 
-                    class="tab-btn flex-1 sm:flex-none px-5 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all text-apple-secondaryText hover:text-apple-darkText">
-                    <i class="ph-bold ph-chart-pie-slice mr-1.5"></i>Relatórios & Gráficos
-                </button>
-            </div>
+            <span class="window-title">Controle Financeiro</span>
         </div>
-    </header>
+
+        <div class="segmented-control">
+            <button class="segment-btn active" onclick="switchPage('lancamentos')">Lançamentos</button>
+            <button class="segment-btn" onclick="switchPage('relatorios')">Gráficos & Relatórios</button>
+        </div>
+    </div>
 
     <!-- Conteúdo Principal -->
-    <main class="max-w-6xl mx-auto px-4">
+    <div class="window-body">
 
-        <!-- ================= ABA 1: LANÇAMENTOS E RESUMO ================= -->
-        <div id="tab-1" class="tab-content active space-y-6">
-
-            <!-- Grid de Resumo Financeiro (Cards Originais) -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                
-                <!-- Card 1: Receita Total -->
-                <div class="mac-glass rounded-2xl p-4 relative overflow-hidden flex flex-col justify-between">
-                    <div>
-                        <div class="flex items-center justify-between text-apple-secondaryText mb-1">
-                            <span class="text-xs font-semibold uppercase tracking-wider">Entradas</span>
-                            <div class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center">
-                                <i class="ph-bold ph-arrow-down-left text-base"></i>
-                            </div>
-                        </div>
-                        <div id="card-total-receita" class="text-2xl font-bold text-slate-800">R$ 0,00</div>
-                    </div>
-                    <div class="mt-3 pt-2 border-t border-black/5 text-[11px] text-apple-secondaryText flex justify-between">
-                        <span>👨 Marido: <strong id="card-marido-receita" class="text-slate-700">R$ 0</strong></span>
-                        <span>👩 Esposa: <strong id="card-esposa-receita" class="text-slate-700">R$ 0</strong></span>
-                    </div>
+        <!-- PAGINA 1: Lançamentos -->
+        <div id="lancamentos" class="page active">
+            <!-- Cards de Métricas -->
+            <div class="metrics-grid">
+                <div class="mac-card metric-box income">
+                    <label>Receitas Realizadas</label>
+                    <h2 id="total-income">R$ 0,00</h2>
                 </div>
-
-                <!-- Card 2: Despesas Totais -->
-                <div class="mac-glass rounded-2xl p-4 relative overflow-hidden flex flex-col justify-between">
-                    <div>
-                        <div class="flex items-center justify-between text-apple-secondaryText mb-1">
-                            <span class="text-xs font-semibold uppercase tracking-wider">Saídas Totais</span>
-                            <div class="w-8 h-8 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center">
-                                <i class="ph-bold ph-arrow-up-right text-base"></i>
-                            </div>
-                        </div>
-                        <div id="card-total-despesa" class="text-2xl font-bold text-slate-800">R$ 0,00</div>
-                    </div>
-                    <div class="mt-3 pt-2 border-t border-black/5 text-[11px] text-apple-secondaryText">
-                        <span>Custos fixos e avulsos do mês</span>
-                    </div>
+                <div class="mac-card metric-box expense">
+                    <label>Despesas Pagas</label>
+                    <h2 id="total-expense">R$ 0,00</h2>
                 </div>
-
-                <!-- Card 3: Saldo Atual -->
-                <div class="mac-glass rounded-2xl p-4 relative overflow-hidden flex flex-col justify-between">
-                    <div>
-                        <div class="flex items-center justify-between text-apple-secondaryText mb-1">
-                            <span class="text-xs font-semibold uppercase tracking-wider">Saldo Previsto</span>
-                            <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
-                                <i class="ph-bold ph-scales text-base"></i>
-                            </div>
-                        </div>
-                        <div id="card-saldo" class="text-2xl font-bold text-slate-800">R$ 0,00</div>
-                    </div>
-                    <div class="mt-3 pt-2 border-t border-black/5 text-[11px] text-apple-secondaryText">
-                        <span>Entradas − Saídas</span>
-                    </div>
+                <div class="mac-card metric-box balance">
+                    <label>Saldo Real (Pago/Recebido)</label>
+                    <h2 id="total-balance">R$ 0,00</h2>
                 </div>
-
-                <!-- Card 4: Gastos Carro (Destaque Laranja) -->
-                <div class="mac-glass rounded-2xl p-4 relative overflow-hidden flex flex-col justify-between border-l-4 border-l-amber-500">
-                    <div>
-                        <div class="flex items-center justify-between text-apple-secondaryText mb-1">
-                            <span class="text-xs font-semibold uppercase tracking-wider">Gastos c/ Carro</span>
-                            <div class="w-8 h-8 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center">
-                                <i class="ph-bold ph-car text-base"></i>
-                            </div>
-                        </div>
-                        <div id="card-gastos-carro" class="text-2xl font-bold text-slate-800">R$ 0,00</div>
-                    </div>
-                    <div class="mt-3 pt-2 border-t border-black/5 text-[11px] text-apple-secondaryText">
-                        <span>Parcelas, Combustível, etc.</span>
-                    </div>
+                <div class="mac-card metric-box car">
+                    <label>Gastos com Carro</label>
+                    <h2 id="car-expense">R$ 0,00</h2>
                 </div>
-
-                <!-- Card 5: Gastos Casa -->
-                <div class="mac-glass rounded-2xl p-4 relative overflow-hidden flex flex-col justify-between">
-                    <div>
-                        <div class="flex items-center justify-between text-apple-secondaryText mb-1">
-                            <span class="text-xs font-semibold uppercase tracking-wider">Gastos c/ Casa</span>
-                            <div class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center">
-                                <i class="ph-bold ph-house-line text-base"></i>
-                            </div>
-                        </div>
-                        <div id="card-gastos-casa" class="text-2xl font-bold text-slate-800">R$ 0,00</div>
-                    </div>
-                    <div class="mt-3 pt-2 border-t border-black/5 text-[11px] text-apple-secondaryText">
-                        <span>Aluguel, luz e compras</span>
-                    </div>
-                </div>
-
             </div>
 
-            <!-- Área Principal: Form de Adição + Tabela de Registros -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                
-                <!-- Formulário estilo iOS Form Original -->
-                <div class="mac-glass rounded-2xl p-5 lg:col-span-1 h-fit">
-                    <h2 class="font-semibold text-base mb-4 flex items-center gap-2 text-slate-800">
-                        <i class="ph-bold ph-plus-circle text-apple-blue"></i>
-                        Novo Lançamento
-                    </h2>
-
-                    <form id="transaction-form" onsubmit="handleFormSubmit(event)" class="space-y-4">
-                        <input type="hidden" id="edit-id" value="">
-
-                        <!-- Tipo: Entradas ou Saída -->
-                        <div>
-                            <label class="block text-xs font-semibold text-apple-secondaryText uppercase tracking-wider mb-1.5">Tipo de Movimentação</label>
-                            <div class="grid grid-cols-2 gap-2 bg-black/5 p-1 rounded-xl">
-                                <button type="button" id="btn-type-despesa" onclick="setTransactionType('despesa')" 
-                                    class="py-1.5 rounded-lg text-xs font-semibold transition-all bg-white text-rose-600 shadow-xs">
-                                    🔴 Saída (Gasto)
-                                </button>
-                                <button type="button" id="btn-type-receita" onclick="setTransactionType('receita')" 
-                                    class="py-1.5 rounded-lg text-xs font-semibold transition-all text-apple-secondaryText">
-                                    🟢 Entrada (Ganho)
-                                </button>
-                            </div>
-                            <input type="hidden" id="transaction-type" value="despesa">
+            <!-- Formulário -->
+            <div class="mac-card">
+                <h3 style="font-size: 15px; font-weight: 600; margin-bottom: 4px;">Novo Lançamento</h3>
+                <form id="finance-form" onsubmit="addTransaction(event)">
+                    <div class="form-grid">
+                        <div class="input-group">
+                            <label>Descrição</label>
+                            <input type="text" id="desc" placeholder="Ex: Cartão de Crédito, Aluguel" required>
                         </div>
-
-                        <!-- Descrição -->
-                        <div>
-                            <label for="description" class="block text-xs font-semibold text-apple-secondaryText uppercase tracking-wider mb-1">Descrição</label>
-                            <input type="text" id="description" placeholder="Ex: Aluguel, Parcela do Carro, Salário" required
-                                class="w-full bg-white/80 border border-black/10 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-apple-blue transition-all">
+                        <div class="input-group">
+                            <label>Valor (R$)</label>
+                            <input type="number" step="0.01" id="amount" placeholder="0.00" required>
                         </div>
-
-                        <!-- Valor e Data -->
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label for="amount" class="block text-xs font-semibold text-apple-secondaryText uppercase tracking-wider mb-1">Valor (R$)</label>
-                                <input type="number" step="0.01" min="0.01" id="amount" placeholder="0,00" required
-                                    class="w-full bg-white/80 border border-black/10 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-apple-blue transition-all">
-                            </div>
-                            <div>
-                                <label for="date" class="block text-xs font-semibold text-apple-secondaryText uppercase tracking-wider mb-1">Data</label>
-                                <input type="date" id="date" required
-                                    class="w-full bg-white/80 border border-black/10 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-apple-blue transition-all">
-                            </div>
-                        </div>
-
-                        <!-- Categoria -->
-                        <div>
-                            <div class="flex items-center justify-between mb-1">
-                                <label for="category" class="block text-xs font-semibold text-apple-secondaryText uppercase tracking-wider">Categoria / Origem</label>
-                                <button type="button" onclick="promptNewCategory()" class="text-[11px] text-apple-blue font-medium hover:underline">+ Criar Nova</button>
-                            </div>
-                            <select id="category" required class="w-full bg-white/80 border border-black/10 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-apple-blue transition-all">
-                                <!-- Categorias preenchidas via JS -->
+                        <div class="input-group">
+                            <label>Tipo</label>
+                            <select id="type" onchange="updateCategories()">
+                                <option value="despesa">Despesa (Saída)</option>
+                                <option value="receita">Receita (Entrada)</option>
                             </select>
                         </div>
-
-                        <!-- Opções de Recorrência (Fixa ou Parcelada) -->
-                        <div class="p-3 bg-black/5 rounded-xl space-y-3">
-                            <!-- Checkbox Fixa -->
-                            <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="checkbox" id="is-fixed" class="w-4 h-4 rounded text-apple-blue focus:ring-apple-blue">
-                                <span class="text-xs font-medium text-slate-700">Entrada / Saída Fixa Mensal</span>
-                            </label>
-                            <!-- Parcelas Restantes -->
-                            <div class="flex items-center justify-between gap-2 border-t border-black/5 pt-2">
-                                <label for="installments" class="text-xs text-apple-secondaryText">Parcelas Restantes:</label>
-                                <input type="number" id="installments" min="1" max="120" value="1" 
-                                    class="w-20 bg-white/80 border border-black/10 rounded-lg px-2 py-1 text-xs text-center focus:outline-none focus:ring-2 focus:ring-apple-blue">
-                            </div>
+                        <div class="input-group">
+                            <label>Categoria / Origem</label>
+                            <select id="category"></select>
                         </div>
-
-                        <!-- Botão Submeter -->
-                        <div class="pt-1 flex gap-2">
-                            <button type="submit" id="btn-save" class="flex-1 bg-apple-blue hover:bg-blue-600 text-white font-medium py-2.5 rounded-xl text-sm transition-all shadow-xs flex items-center justify-center gap-1.5">
-                                <i class="ph-bold ph-check"></i> Adicionar Lançamento
-                            </button>
-                            <button type="button" id="btn-cancel" onclick="resetForm()" class="hidden bg-slate-200 hover:bg-slate-300 text-slate-700 font-medium px-4 py-2.5 rounded-xl text-sm transition-all">
-                                Cancelar
-                            </button>
+                        <div class="input-group">
+                            <label>Data de Vencimento</label>
+                            <input type="date" id="date" required>
                         </div>
-                    </form>
-                </div>
-
-                <!-- Tabela de Histórico de Lançamentos -->
-                <div class="mac-glass rounded-2xl p-5 lg:col-span-2 flex flex-col justify-between">
-                    <div>
-                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-                            <h2 class="font-semibold text-base flex items-center gap-2 text-slate-800">
-                                <i class="ph-bold ph-receipt text-apple-blue"></i>
-                                Histórico de Lançamentos
-                            </h2>
-                            <div class="flex items-center gap-2">
-                                <!-- Filtro por Mês -->
-                                <input type="month" id="filter-month" onchange="updateDashboard()" 
-                                    class="bg-white/80 border border-black/10 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-apple-blue">
-                                <input type="text" id="search-input" onkeyup="filterTransactions()" placeholder="Buscar..." 
-                                    class="bg-white/80 border border-black/10 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-apple-blue w-full sm:w-36">
-                            </div>
-                        </div>
-
-                        <!-- Lista Responsiva de Itens -->
-                        <div class="overflow-x-auto rounded-xl border border-black/5 bg-white/40">
-                            <table class="w-full text-left border-collapse">
-                                <thead>
-                                    <tr class="border-b border-black/5 bg-black/5 text-[11px] font-semibold text-apple-secondaryText uppercase tracking-wider">
-                                        <th class="p-3">Data</th>
-                                        <th class="p-3">Descrição</th>
-                                        <th class="p-3">Categoria</th>
-                                        <th class="p-3 text-center">Parcela</th>
-                                        <th class="p-3 text-right">Valor</th>
-                                        <th class="p-3 text-center">Ações</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="transactions-list" class="divide-y divide-black/5 text-sm">
-                                    <!-- Preenchido dinamicamente via JS -->
-                                </tbody>
-                            </table>
+                        <div class="input-group">
+                            <label>Parcelas Restantes</label>
+                            <input type="number" id="installments" min="1" value="1" placeholder="1 = Única">
                         </div>
                     </div>
 
-                    <!-- Rodapé da Tabela -->
-                    <div class="mt-4 pt-3 border-t border-black/5 flex items-center justify-between text-xs text-apple-secondaryText">
-                        <span id="transaction-count">0 lançamentos encontrados</span>
-                        <button onclick="clearAllData()" class="text-rose-500 hover:text-rose-700 hover:underline flex items-center gap-1">
-                            <i class="ph-bold ph-trash"></i> Limpar todos os dados
-                        </button>
-                    </div>
-                </div>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="isFixed"> Fixa Mensal (Repete todo mês automaticamente)
+                    </label>
 
+                    <button type="submit" class="mac-btn">Salvar Lançamento</button>
+                </form>
             </div>
 
+            <!-- Tabela de Lançamentos -->
+            <div class="mac-card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <h3 style="font-size: 15px; font-weight: 600;">Histórico de Lançamentos</h3>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <label style="font-size: 12px; color: var(--text-sec);">Mês:</label>
+                        <input type="month" id="filter-month" onchange="renderApp()">
+                    </div>
+                </div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Descrição</th>
+                                <th>Categoria</th>
+                                <th>Tipo</th>
+                                <th>Parcela</th>
+                                <th>Status</th>
+                                <th>Valor</th>
+                                <th>Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transaction-rows"></tbody>
+                    </table>
+                </div>
+            </div>
         </div>
 
-        <!-- ================= ABA 2: RELATÓRIOS E GRÁFICOS (Layout Original) ================= -->
-        <div id="tab-2" class="tab-content space-y-6">
-
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-                <!-- Gráfico 1: Gastos por Categoria (Rosca / Pizza Original) -->
-                <div class="mac-glass rounded-2xl p-5">
-                    <div class="flex items-center justify-between mb-4">
-                        <div>
-                            <h2 class="font-semibold text-base text-slate-800 flex items-center gap-2">
-                                <i class="ph-bold ph-chart-pie text-apple-purple"></i>
-                                Divisão de Gastos por Categoria
-                            </h2>
-                            <p class="text-xs text-apple-secondaryText">Visualização proporcional de onde o dinheiro foi gasto.</p>
-                        </div>
-                    </div>
-                    <div class="relative h-72 w-full flex items-center justify-center">
-                        <canvas id="categoryChart"></canvas>
+        <!-- PAGINA 2: Relatórios -->
+        <div id="relatorios" class="page">
+            <div class="charts-container">
+                <div class="mac-card chart-box">
+                    <h3 style="font-size: 15px; font-weight: 600; margin-bottom: 12px;">Gastos por Categoria (Rosca)</h3>
+                    <div style="position: relative; flex: 1; min-height: 0;">
+                        <canvas id="pieChart"></canvas>
                     </div>
                 </div>
-
-                <!-- Gráfico 2: Entradas vs Saídas por Mês (Colunas Original) -->
-                <div class="mac-glass rounded-2xl p-5">
-                    <div class="flex items-center justify-between mb-4">
-                        <div>
-                            <h2 class="font-semibold text-base text-slate-800 flex items-center gap-2">
-                                <i class="ph-bold ph-chart-bar text-apple-green"></i>
-                                Comparativo de Entradas vs. Saídas
-                            </h2>
-                            <p class="text-xs text-apple-secondaryText">Acompanhamento mês a mês dos totais acumulados.</p>
-                        </div>
-                    </div>
-                    <div class="relative h-72 w-full flex items-center justify-center">
-                        <canvas id="monthlyChart"></canvas>
-                    </div>
-                </div>
-
-            </div>
-
-            <!-- Resumo Analítico Adicional -->
-            <div class="mac-glass rounded-2xl p-5">
-                <h3 class="font-semibold text-sm text-slate-800 mb-3 flex items-center gap-2">
-                    <i class="ph-bold ph-lightbulb text-amber-500"></i> Resumo de Indicadores
-                </h3>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-                    <div class="p-3 bg-white/50 rounded-xl border border-black/5">
-                        <span class="text-apple-secondaryText block mb-1">Maior Categoria de Custo:</span>
-                        <strong id="analytics-top-category" class="text-sm text-slate-800">Calculando...</strong>
-                    </div>
-                    <div class="p-3 bg-white/50 rounded-xl border border-black/5">
-                        <span class="text-apple-secondaryText block mb-1">Participação Receita Marido:</span>
-                        <strong id="analytics-marido-percent" class="text-sm text-slate-800">0%</strong>
-                    </div>
-                    <div class="p-3 bg-white/50 rounded-xl border border-black/5">
-                        <span class="text-apple-secondaryText block mb-1">Participação Receita Esposa:</span>
-                        <strong id="analytics-esposa-percent" class="text-sm text-slate-800">0%</strong>
+                <div class="mac-card chart-box">
+                    <h3 style="font-size: 15px; font-weight: 600; margin-bottom: 12px;">Entradas vs Saídas (Colunas)</h3>
+                    <div style="position: relative; flex: 1; min-height: 0;">
+                        <canvas id="barChart"></canvas>
                     </div>
                 </div>
             </div>
-
         </div>
 
-    </main>
+    </div>
+</div>
 
-    <!-- JavaScript Lógica Principal -->
-    <script>
-        // --- DADOS INICIAIS DE CATEGORIA ---
-        const DEFAULT_CATEGORIES = [
-            { id: 'receita-marido', name: 'Receita: Marido', type: 'receita' },
-            { id: 'receita-esposa', name: 'Receita: Esposa', type: 'receita' },
-            { id: 'carro', name: 'Carro', type: 'despesa' },
-            { id: 'casa', name: 'Casa & Contas', type: 'despesa' },
-            { id: 'alimentacao', name: 'Alimentação & Mercado', type: 'despesa' },
-            { id: 'lazer', name: 'Lazer & Viagens', type: 'despesa' },
-            { id: 'saude', name: 'Saúde & Farmácia', type: 'despesa' },
-            { id: 'outros', name: 'Outros Gastos', type: 'despesa' }
-        ];
+<script>
+    let transactions = JSON.parse(localStorage.getItem('apple_finance_mac')) || [];
+    let pieChartInstance = null;
+    let barChartInstance = null;
 
-        // Lançamentos de Exemplo Iniciais
-        const INITIAL_TRANSACTIONS = [
-            { id: '1', description: 'Salário Marido', amount: 8500.00, date: getRecentDate(0), category: 'Receita: Marido', type: 'receita', isFixed: true, currentInstallment: 1, totalInstallments: 1 },
-            { id: '2', description: 'Rendimento Esposa', amount: 5200.00, date: getRecentDate(1), category: 'Receita: Esposa', type: 'receita', isFixed: true, currentInstallment: 1, totalInstallments: 1 },
-            { id: '3', description: 'Parcela do Carro', amount: 890.00, date: getRecentDate(2), category: 'Carro', type: 'despesa', isFixed: false, currentInstallment: 1, totalInstallments: 12 },
-            { id: '4', description: 'Aluguel / Condomínio', amount: 2200.00, date: getRecentDate(3), category: 'Casa & Contas', type: 'despesa', isFixed: true, currentInstallment: 1, totalInstallments: 1 },
-            { id: '5', description: 'Supermercado', amount: 1450.00, date: getRecentDate(4), category: 'Alimentação & Mercado', type: 'despesa', isFixed: false, currentInstallment: 1, totalInstallments: 1 }
-        ];
+    const categories = {
+        despesa: ['Carro', 'Casa', 'Alimentação', 'Cartão de Crédito', 'Contas Fixas', 'Lazer', 'Outros'],
+        receita: ['Marido', 'Esposa', 'Renda Extra', 'Outros']
+    };
 
-        function getRecentDate(daysAgo) {
-            const d = new Date();
-            d.setDate(d.getDate() - daysAgo);
-            return d.toISOString().split('T')[0];
+    document.addEventListener('DOMContentLoaded', () => {
+        const today = new Date();
+        document.getElementById('filter-month').value = today.toISOString().slice(0, 7);
+        document.getElementById('date').valueAsDate = today;
+        updateCategories();
+        renderApp();
+    });
+
+    function switchPage(pageId) {
+        document.querySelectorAll('.segment-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+
+        if(pageId === 'lancamentos') {
+            document.querySelectorAll('.segment-btn')[0].classList.add('active');
+            document.getElementById('lancamentos').classList.add('active');
+        } else {
+            document.querySelectorAll('.segment-btn')[1].classList.add('active');
+            document.getElementById('relatorios').classList.add('active');
+            renderCharts();
         }
+    }
 
-        // State Global
-        let transactions = JSON.parse(localStorage.getItem('finances_transactions')) || INITIAL_TRANSACTIONS;
-        let customCategories = JSON.parse(localStorage.getItem('finances_categories')) || DEFAULT_CATEGORIES;
+    function updateCategories() {
+        const type = document.getElementById('type').value;
+        const selectCat = document.getElementById('category');
+        selectCat.innerHTML = '';
+        categories[type].forEach(cat => {
+            const opt = document.createElement('option');
+            opt.value = cat;
+            opt.textContent = cat;
+            selectCat.appendChild(opt);
+        });
+    }
 
-        // Instâncias dos Gráficos Chart.js
-        let categoryChartInstance = null;
-        let monthlyChartInstance = null;
+    function addTransaction(e) {
+        e.preventDefault();
 
-        // --- INICIALIZAÇÃO DA APLICAÇÃO ---
-        window.onload = function () {
-            const today = new Date();
-            document.getElementById('date').value = today.toISOString().split('T')[0];
-            document.getElementById('filter-month').value = today.toISOString().substring(0, 7);
-            
-            populateCategorySelect();
-            updateDashboard();
-            initCharts();
+        const desc = document.getElementById('desc').value;
+        const amount = parseFloat(document.getElementById('amount').value);
+        const type = document.getElementById('type').value;
+        const category = document.getElementById('category').value;
+        const date = document.getElementById('date').value;
+        const isFixed = document.getElementById('isFixed').checked;
+        const installments = parseInt(document.getElementById('installments').value) || 1;
+
+        // Se a data do lançamento for hoje ou retroativa, já entra como PAGO. Se for futura, PENDENTE.
+        const todayStr = new Date().toISOString().split('T')[0];
+        const initialStatus = (date <= todayStr) ? 'pago' : 'pendente';
+
+        const baseItem = {
+            id: Date.now(),
+            desc,
+            amount,
+            type,
+            category,
+            date,
+            isFixed,
+            installments,
+            currentInstallment: 1,
+            status: initialStatus
         };
 
-        // --- NAVEGAÇÃO ENTRE ABAS ---
-        function switchTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('bg-white', 'text-apple-darkText', 'shadow-xs');
-                btn.classList.add('text-apple-secondaryText');
-            });
+        if (!isFixed && installments > 1) {
+            let [year, month, day] = date.split('-').map(Number);
+            for (let i = 0; i < installments; i++) {
+                let nextMonth = month + i;
+                let nextYear = year + Math.floor((nextMonth - 1) / 12);
+                let formattedMonth = ((nextMonth - 1) % 12 + 1).toString().padStart(2, '0');
+                let formattedDay = day.toString().padStart(2, '0');
+                let itemDate = `${nextYear}-${formattedMonth}-${formattedDay}`;
 
-            document.getElementById(tabId).classList.add('active');
-            
-            if(tabId === 'tab-1') {
-                document.getElementById('tab-btn-1').classList.add('bg-white', 'text-apple-darkText', 'shadow-xs');
-            } else {
-                document.getElementById('tab-btn-2').classList.add('bg-white', 'text-apple-darkText', 'shadow-xs');
-                setTimeout(updateCharts, 50);
+                transactions.push({
+                    ...baseItem,
+                    id: Date.now() + i,
+                    date: itemDate,
+                    currentInstallment: i + 1,
+                    status: (itemDate <= todayStr) ? 'pago' : 'pendente'
+                });
             }
+        } else {
+            transactions.push(baseItem);
         }
 
-        // --- MANIPULAÇÃO DO FORMULÁRIO ---
-        function setTransactionType(type) {
-            document.getElementById('transaction-type').value = type;
-            const btnDespesa = document.getElementById('btn-type-despesa');
-            const btnReceita = document.getElementById('btn-type-receita');
+        saveAndRefresh();
+        document.getElementById('finance-form').reset();
+        document.getElementById('date').valueAsDate = new Date();
+        updateCategories();
+    }
 
-            if (type === 'despesa') {
-                btnDespesa.className = "py-1.5 rounded-lg text-xs font-semibold transition-all bg-white text-rose-600 shadow-xs";
-                btnReceita.className = "py-1.5 rounded-lg text-xs font-semibold transition-all text-apple-secondaryText";
-            } else {
-                btnReceita.className = "py-1.5 rounded-lg text-xs font-semibold transition-all bg-white text-emerald-600 shadow-xs";
-                btnDespesa.className = "py-1.5 rounded-lg text-xs font-semibold transition-all text-apple-secondaryText";
+    function toggleStatus(id) {
+        const t = transactions.find(item => item.id === id);
+        if (t) {
+            t.status = (t.status === 'pago') ? 'pendente' : 'pago';
+            saveAndRefresh();
+        }
+    }
+
+    function deleteTransaction(id) {
+        transactions = transactions.filter(t => t.id !== id);
+        saveAndRefresh();
+    }
+
+    function saveAndRefresh() {
+        localStorage.setItem('apple_finance_mac', JSON.stringify(transactions));
+        renderApp();
+    }
+
+    function getFilteredTransactions() {
+        const filterMonth = document.getElementById('filter-month').value;
+        return transactions.filter(t => t.isFixed || t.date.startsWith(filterMonth));
+    }
+
+    function renderApp() {
+        const currentData = getFilteredTransactions();
+        const tbody = document.getElementById('transaction-rows');
+        tbody.innerHTML = '';
+
+        let incReal = 0, expReal = 0, carExp = 0;
+        const todayStr = new Date().toISOString().split('T')[0];
+
+        currentData.forEach(t => {
+            // Contabiliza no saldo real apenas o que está PAGO
+            if (t.status === 'pago') {
+                if (t.type === 'receita') incReal += t.amount;
+                if (t.type === 'despesa') expReal += t.amount;
             }
-            populateCategorySelect();
-        }
+            // Para o gráfico/resumo do carro, considera gastos do mês
+            if (t.type === 'despesa' && t.category === 'Carro') carExp += t.amount;
 
-        function populateCategorySelect() {
-            const select = document.getElementById('category');
-            const currentType = document.getElementById('transaction-type').value;
-            select.innerHTML = '';
+            // Define badge visual do status
+            let statusClass = t.status;
+            let statusLabel = (t.status === 'pago') ? '✓ Pago' : '⏳ Pendente';
 
-            const filteredCats = customCategories.filter(c => !c.type || c.type === currentType);
-            
-            filteredCats.forEach(cat => {
-                const opt = document.createElement('option');
-                opt.value = cat.name;
-                opt.textContent = cat.name;
-                select.appendChild(opt);
-            });
-        }
-
-        function promptNewCategory() {
-            const name = prompt('Digite o nome da nova Categoria:');
-            if (name && name.trim() !== '') {
-                const currentType = document.getElementById('transaction-type').value;
-                const newCat = { id: Date.now().toString(), name: name.trim(), type: currentType };
-                customCategories.push(newCat);
-                localStorage.setItem('finances_categories', JSON.stringify(customCategories));
-                populateCategorySelect();
-                document.getElementById('category').value = newCat.name;
-            }
-        }
-
-        function handleFormSubmit(event) {
-            event.preventDefault();
-
-            const editId = document.getElementById('edit-id').value;
-            const type = document.getElementById('transaction-type').value;
-            const description = document.getElementById('description').value;
-            const amount = parseFloat(document.getElementById('amount').value);
-            const date = document.getElementById('date').value;
-            const category = document.getElementById('category').value;
-            const isFixed = document.getElementById('is-fixed').checked;
-            const installments = parseInt(document.getElementById('installments').value) || 1;
-
-            if (editId) {
-                // Edição de item existente
-                const index = transactions.findIndex(t => t.id === editId);
-                if (index !== -1) {
-                    transactions[index] = { 
-                        ...transactions[index], 
-                        type, description, amount, date, category, isFixed 
-                    };
-                }
-            } else {
-                // Novo Cadastro (Suporte a parcelas automáticas)
-                if (!isFixed && installments > 1) {
-                    let [year, month, day] = date.split('-').map(Number);
-                    for (let i = 0; i < installments; i++) {
-                        let nextMonth = month + i;
-                        let nextYear = year + Math.floor((nextMonth - 1) / 12);
-                        let formattedMonth = ((nextMonth - 1) % 12 + 1).toString().padStart(2, '0');
-                        let formattedDay = day.toString().padStart(2, '0');
-
-                        transactions.unshift({
-                            id: (Date.now() + i).toString(),
-                            type,
-                            description,
-                            amount,
-                            date: `${nextYear}-${formattedMonth}-${formattedDay}`,
-                            category,
-                            isFixed: false,
-                            currentInstallment: i + 1,
-                            totalInstallments: installments
-                        });
-                    }
-                } else {
-                    transactions.unshift({
-                        id: Date.now().toString(),
-                        type,
-                        description,
-                        amount,
-                        date,
-                        category,
-                        isFixed,
-                        currentInstallment: 1,
-                        totalInstallments: 1
-                    });
-                }
+            if (t.status === 'pendente' && t.date < todayStr) {
+                statusClass = 'vencido';
+                statusLabel = '⚠ Vencido';
             }
 
-            saveAndSync();
-            resetForm();
-        }
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${t.date.split('-').reverse().join('/')}</td>
+                <td><strong>${t.desc}</strong> ${t.isFixed ? '<span class="tag fixa">Fixa</span>' : ''}</td>
+                <td>${t.category}</td>
+                <td><span class="tag ${t.type}">${t.type.toUpperCase()}</span></td>
+                <td>${t.isFixed ? 'Mensal' : `${t.currentInstallment}/${t.installments}`}</td>
+                <td>
+                    <button class="status-btn ${statusClass}" onclick="toggleStatus(${t.id})">
+                        ${statusLabel}
+                    </button>
+                </td>
+                <td style="font-weight:600; color: ${t.type === 'receita' ? 'var(--accent-green)' : 'var(--accent-red)'}">
+                    R$ ${t.amount.toLocaleString('pt-BR', {minimumFractionDigits: 2})}
+                </td>
+                <td><button class="btn-delete" onclick="deleteTransaction(${t.id})">Remover</button></td>
+            `;
+            tbody.appendChild(tr);
+        });
 
-        function editTransaction(id) {
-            const t = transactions.find(item => item.id === id);
-            if (!t) return;
+        document.getElementById('total-income').textContent = `R$ ${incReal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+        document.getElementById('total-expense').textContent = `R$ ${expReal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+        document.getElementById('total-balance').textContent = `R$ ${(incReal - expReal).toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+        document.getElementById('car-expense').textContent = `R$ ${carExp.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+    }
 
-            document.getElementById('edit-id').value = t.id;
-            setTransactionType(t.type);
-            document.getElementById('description').value = t.description;
-            document.getElementById('amount').value = t.amount;
-            document.getElementById('date').value = t.date;
-            document.getElementById('category').value = t.category;
-            document.getElementById('is-fixed').checked = t.isFixed || false;
-            document.getElementById('installments').value = t.totalInstallments || 1;
+    function renderCharts() {
+        const currentData = getFilteredTransactions();
 
-            document.getElementById('btn-save').innerHTML = '<i class="ph-bold ph-check"></i> Salvar Alteração';
-            document.getElementById('btn-cancel').classList.remove('hidden');
+        const categoriesMap = {};
+        currentData.filter(t => t.type === 'despesa').forEach(t => {
+            categoriesMap[t.category] = (categoriesMap[t.category] || 0) + t.amount;
+        });
 
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
+        const pieCtx = document.getElementById('pieChart').getContext('2d');
+        if (pieChartInstance) pieChartInstance.destroy();
 
-        function deleteTransaction(id) {
-            transactions = transactions.filter(t => t.id !== id);
-            saveAndSync();
-        }
-
-        function resetForm() {
-            document.getElementById('edit-id').value = '';
-            document.getElementById('transaction-form').reset();
-            document.getElementById('date').value = new Date().toISOString().split('T')[0];
-            document.getElementById('is-fixed').checked = false;
-            document.getElementById('installments').value = 1;
-            setTransactionType('despesa');
-
-            document.getElementById('btn-save').innerHTML = '<i class="ph-bold ph-plus"></i> Adicionar Lançamento';
-            document.getElementById('btn-cancel').classList.add('hidden');
-        }
-
-        function saveAndSync() {
-            localStorage.setItem('finances_transactions', JSON.stringify(transactions));
-            updateDashboard();
-            updateCharts();
-        }
-
-        function clearAllData() {
-            if (confirm('Tem certeza de que deseja apagar todos os lançamentos? Essa ação não pode ser desfeita.')) {
-                transactions = [];
-                saveAndSync();
+        pieChartInstance = new Chart(pieCtx, {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(categoriesMap),
+                datasets: [{
+                    data: Object.values(categoriesMap),
+                    backgroundColor: ['#ff9500', '#ff3b30', '#007aff', '#af52de', '#34c759', '#86868b', '#5856d6'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom' } }
             }
-        }
+        });
 
-        function formatCurrency(val) {
-            return val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-        }
+        let inc = 0, exp = 0;
+        currentData.forEach(t => {
+            if (t.type === 'receita') inc += t.amount;
+            if (t.type === 'despesa') exp += t.amount;
+        });
 
-        // Obter lançamentos visíveis considerando itens fixos e mês selecionado
-        function getVisibleTransactions() {
-            const selectedMonth = document.getElementById('filter-month').value;
-            if (!selectedMonth) return transactions;
+        const barCtx = document.getElementById('barChart').getContext('2d');
+        if (barChartInstance) barChartInstance.destroy();
 
-            return transactions.filter(t => {
-                if (t.isFixed) return true; // Lançamentos fixos repetem em todos os meses
-                return t.date.startsWith(selectedMonth);
-            });
-        }
-
-        function updateDashboard() {
-            const currentData = getVisibleTransactions();
-
-            let totalReceita = 0;
-            let maridoReceita = 0;
-            let esposaReceita = 0;
-            let totalDespesa = 0;
-            let gastosCarro = 0;
-            let gastosCasa = 0;
-
-            currentData.forEach(t => {
-                const amt = Number(t.amount);
-                if (t.type === 'receita') {
-                    totalReceita += amt;
-                    if (t.category.toLowerCase().includes('marido')) maridoReceita += amt;
-                    if (t.category.toLowerCase().includes('esposa')) esposaReceita += amt;
-                } else {
-                    totalDespesa += amt;
-                    if (t.category.toLowerCase().includes('carro')) gastosCarro += amt;
-                    if (t.category.toLowerCase().includes('casa')) gastosCasa += amt;
-                }
-            });
-
-            const saldo = totalReceita - totalDespesa;
-
-            // Atualização dos Cards Superiores
-            document.getElementById('card-total-receita').textContent = formatCurrency(totalReceita);
-            document.getElementById('card-marido-receita').textContent = formatCurrency(maridoReceita);
-            document.getElementById('card-esposa-receita').textContent = formatCurrency(esposaReceita);
-            document.getElementById('card-total-despesa').textContent = formatCurrency(totalDespesa);
-            document.getElementById('card-saldo').textContent = formatCurrency(saldo);
-            document.getElementById('card-gastos-carro').textContent = formatCurrency(gastosCarro);
-            document.getElementById('card-gastos-casa').textContent = formatCurrency(gastosCasa);
-
-            // Atualização de Indicadores Analíticos
-            const totalRecForPct = totalReceita || 1;
-            document.getElementById('analytics-marido-percent').textContent = ((maridoReceita / totalRecForPct) * 100).toFixed(1) + '%';
-            document.getElementById('analytics-esposa-percent').textContent = ((esposaReceita / totalRecForPct) * 100).toFixed(1) + '%';
-
-            renderTable(currentData);
-        }
-
-        function renderTable(dataToRender) {
-            const tbody = document.getElementById('transactions-list');
-            const searchVal = document.getElementById('search-input').value.toLowerCase();
-            tbody.innerHTML = '';
-
-            const filtered = dataToRender.filter(t => 
-                t.description.toLowerCase().includes(searchVal) || 
-                t.category.toLowerCase().includes(searchVal)
-            );
-
-            document.getElementById('transaction-count').textContent = `${filtered.length} lançamento(s) encontrado(s)`;
-
-            if (filtered.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="6" class="p-6 text-center text-apple-secondaryText">Nenhum registro encontrado para este mês.</td>
-                    </tr>
-                `;
-                return;
+        barChartInstance = new Chart(barCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Visão do Mês'],
+                datasets: [
+                    { label: 'Entradas (R$)', data: [inc], backgroundColor: '#34c759', borderRadius: 6 },
+                    { label: 'Saídas (R$)', data: [exp], backgroundColor: '#ff3b30', borderRadius: 6 }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom' } }
             }
+        });
+    }
+</script>
 
-            filtered.forEach(t => {
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-black/5 transition-colors";
-
-                const isReceita = t.type === 'receita';
-                const dateFormatted = new Date(t.date + 'T00:00:00').toLocaleDateString('pt-BR');
-                const parcelLabel = t.isFixed ? '<span class="text-xs px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 font-medium">Fixa</span>' : 
-                    (t.totalInstallments > 1 ? `${t.currentInstallment}/${t.totalInstallments}` : '1/1');
-
-                tr.innerHTML = `
-                    <td class="p-3 text-apple-secondaryText text-xs">${dateFormatted}</td>
-                    <td class="p-3 font-medium text-slate-800">${t.description}</td>
-                    <td class="p-3">
-                        <span class="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-medium ${isReceita ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-700'}">
-                            ${t.category}
-                        </span>
-                    </td>
-                    <td class="p-3 text-center text-xs text-apple-secondaryText">${parcelLabel}</td>
-                    <td class="p-3 text-right font-semibold ${isReceita ? 'text-emerald-600' : 'text-rose-600'}">
-                        ${isReceita ? '+' : '-'} ${formatCurrency(t.amount)}
-                    </td>
-                    <td class="p-3 text-center">
-                        <div class="flex items-center justify-center gap-1">
-                            <button onclick="editTransaction('${t.id}')" title="Editar" class="p-1.5 text-apple-secondaryText hover:text-apple-blue hover:bg-black/5 rounded-lg transition-all">
-                                <i class="ph-bold ph-pencil-simple text-base"></i>
-                            </button>
-                            <button onclick="deleteTransaction('${t.id}')" title="Excluir" class="p-1.5 text-apple-secondaryText hover:text-rose-600 hover:bg-black/5 rounded-lg transition-all">
-                                <i class="ph-bold ph-trash text-base"></i>
-                            </button>
-                        </div>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        function filterTransactions() {
-            updateDashboard();
-        }
-
-        // --- INTEGRAÇÃO CHART.JS (Gráficos Originais) ---
-        function initCharts() {
-            const ctxCategory = document.getElementById('categoryChart').getContext('2d');
-            const ctxMonthly = document.getElementById('monthlyChart').getContext('2d');
-
-            categoryChartInstance = new Chart(ctxCategory, {
-                type: 'doughnut',
-                data: { labels: [], datasets: [{ data: [], backgroundColor: [] }] },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'right', labels: { font: { family: 'Inter', size: 11 } } },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return ` ${context.label}: ${formatCurrency(context.raw)}`;
-                                }
-                            }
-                        }
-                    },
-                    cutout: '70%'
-                }
-            });
-
-            monthlyChartInstance = new Chart(ctxMonthly, {
-                type: 'bar',
-                data: { labels: [], datasets: [] },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'top', labels: { font: { family: 'Inter', size: 11 } } },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return ` ${context.dataset.label}: ${formatCurrency(context.raw)}`;
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        x: { grid: { display: false } },
-                        y: { grid: { color: 'rgba(0,0,0,0.05)' } }
-                    }
-                }
-            });
-
-            updateCharts();
-        }
-
-        function updateCharts() {
-            if (!categoryChartInstance || !monthlyChartInstance) return;
-
-            const currentData = getVisibleTransactions();
-
-            // 1. Dados de Gastos por Categoria
-            const despesas = currentData.filter(t => t.type === 'despesa');
-            const catMap = {};
-
-            despesas.forEach(d => {
-                catMap[d.category] = (catMap[d.category] || 0) + Number(d.amount);
-            });
-
-            const catLabels = Object.keys(catMap);
-            const catValues = Object.values(catMap);
-
-            const palette = ['#FF9500', '#5856D6', '#FF2D55', '#34C759', '#007AFF', '#AF52DE', '#FFCC00', '#8E8E93'];
-
-            categoryChartInstance.data.labels = catLabels;
-            categoryChartInstance.data.datasets = [{
-                data: catValues,
-                backgroundColor: palette.slice(0, catLabels.length),
-                borderWidth: 0
-            }];
-            categoryChartInstance.update();
-
-            // Atualiza Maior Categoria
-            let maxVal = 0;
-            let maxCat = 'Nenhuma';
-            catLabels.forEach((cat, idx) => {
-                if (catValues[idx] > maxVal) {
-                    maxVal = catValues[idx];
-                    maxCat = `${cat} (${formatCurrency(maxVal)})`;
-                }
-            });
-            document.getElementById('analytics-top-category').textContent = maxCat;
-
-            // 2. Dados Mensais (Entradas vs Saídas)
-            const monthlyData = {};
-
-            transactions.forEach(t => {
-                const month = t.date.substring(0, 7);
-                if (!monthlyData[month]) {
-                    monthlyData[month] = { receita: 0, despesa: 0 };
-                }
-                if (t.type === 'receita') {
-                    monthlyData[month].receita += Number(t.amount);
-                } else {
-                    monthlyData[month].despesa += Number(t.amount);
-                }
-            });
-
-            const sortedMonths = Object.keys(monthlyData).sort();
-            const formattedMonthLabels = sortedMonths.map(m => {
-                const [year, month] = m.split('-');
-                const dateObj = new Date(year, month - 1, 1);
-                return dateObj.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' });
-            });
-
-            const receitaSeries = sortedMonths.map(m => monthlyData[m].receita);
-            const despesaSeries = sortedMonths.map(m => monthlyData[m].despesa);
-
-            monthlyChartInstance.data.labels = formattedMonthLabels;
-            monthlyChartInstance.data.datasets = [
-                {
-                    label: 'Entradas',
-                    data: receitaSeries,
-                    backgroundColor: '#34C759',
-                    borderRadius: 6
-                },
-                {
-                    label: 'Saídas',
-                    data: despesaSeries,
-                    backgroundColor: '#FF3B30',
-                    borderRadius: 6
-                }
-            ];
-            monthlyChartInstance.update();
-        }
-    </script>
 </body>
 </html>
