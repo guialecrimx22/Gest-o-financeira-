@@ -43,7 +43,7 @@
             align-items: flex-start;
         }
 
-        /* macOS Window Frame */
+        /* Moldura de Janela macOS */
         .mac-window {
             width: 100%;
             max-width: 1140px;
@@ -58,7 +58,7 @@
             overflow: hidden;
         }
 
-        /* Window Header Bar */
+        /* Barra Superior macOS */
         .window-header {
             padding: 16px 20px;
             display: flex;
@@ -89,7 +89,7 @@
             letter-spacing: -0.2px;
         }
 
-        /* Segmented Control Navigation */
+        /* Controle Segmentado do iOS */
         .segmented-control {
             display: flex;
             background: rgba(0, 0, 0, 0.06);
@@ -116,7 +116,7 @@
             font-weight: 600;
         }
 
-        /* Main Window Body */
+        /* Corpo da Janela */
         .window-body {
             padding: 28px;
         }
@@ -146,7 +146,7 @@
             box-shadow: var(--shadow-card);
         }
 
-        /* Metric Cards Grid */
+        /* Métricas */
         .metrics-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -176,7 +176,7 @@
         .metric-box.balance h2 { color: var(--accent-blue); }
         .metric-box.car h2 { color: var(--accent-orange); }
 
-        /* Form */
+        /* Formulário */
         .form-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
@@ -246,7 +246,15 @@
             transform: translateY(-1px);
         }
 
-        /* Table */
+        .mac-btn.btn-sec {
+            background: rgba(0, 0, 0, 0.06);
+            color: var(--text-main);
+            margin-top: 0;
+            padding: 8px 12px;
+            font-size: 12px;
+        }
+
+        /* Tabela */
         .table-wrapper {
             overflow-x: auto;
             margin-top: 14px;
@@ -284,7 +292,7 @@
         .tag.despesa { background: rgba(255, 59, 48, 0.15); color: var(--accent-red); }
         .tag.fixa { background: rgba(175, 82, 222, 0.15); color: var(--accent-purple); }
 
-        /* Status Toggle Buttons */
+        /* Botões de Status */
         .status-btn {
             border: none;
             padding: 4px 10px;
@@ -307,7 +315,7 @@
             font-weight: 500;
         }
 
-        /* Charts Layout */
+        /* Gráficos */
         .charts-container {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
@@ -330,7 +338,7 @@
 <body>
 
 <div class="mac-window">
-    <!-- Header estilo macOS -->
+    <!-- Header macOS -->
     <div class="window-header">
         <div style="display: flex; align-items: center; gap: 16px;">
             <div class="traffic-lights">
@@ -347,12 +355,12 @@
         </div>
     </div>
 
-    <!-- Conteúdo Principal -->
+    <!-- Corpo -->
     <div class="window-body">
 
         <!-- PAGINA 1: Lançamentos -->
         <div id="lancamentos" class="page active">
-            <!-- Cards de Métricas -->
+            <!-- Cards Resumo -->
             <div class="metrics-grid">
                 <div class="mac-card metric-box income">
                     <label>Receitas Realizadas</label>
@@ -379,7 +387,7 @@
                     <div class="form-grid">
                         <div class="input-group">
                             <label>Descrição</label>
-                            <input type="text" id="desc" placeholder="Ex: Cartão de Crédito, Aluguel" required>
+                            <input type="text" id="desc" placeholder="Ex: Cartão, Aluguel" required>
                         </div>
                         <div class="input-group">
                             <label>Valor (R$)</label>
@@ -393,11 +401,14 @@
                             </select>
                         </div>
                         <div class="input-group">
-                            <label>Categoria / Origem</label>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <label>Categoria</label>
+                                <button type="button" class="mac-btn btn-sec" onclick="addNewCategory()">+ Criar</button>
+                            </div>
                             <select id="category"></select>
                         </div>
                         <div class="input-group">
-                            <label>Data de Vencimento</label>
+                            <label>Vencimento / Data</label>
                             <input type="date" id="date" required>
                         </div>
                         <div class="input-group">
@@ -414,7 +425,7 @@
                 </form>
             </div>
 
-            <!-- Tabela de Lançamentos -->
+            <!-- Tabela -->
             <div class="mac-card">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                     <h3 style="font-size: 15px; font-weight: 600;">Histórico de Lançamentos</h3>
@@ -466,13 +477,13 @@
 
 <script>
     let transactions = JSON.parse(localStorage.getItem('apple_finance_mac')) || [];
-    let pieChartInstance = null;
-    let barChartInstance = null;
-
-    const categories = {
+    let customCategories = JSON.parse(localStorage.getItem('apple_finance_categories')) || {
         despesa: ['Carro', 'Casa', 'Alimentação', 'Cartão de Crédito', 'Contas Fixas', 'Lazer', 'Outros'],
         receita: ['Marido', 'Esposa', 'Renda Extra', 'Outros']
     };
+
+    let pieChartInstance = null;
+    let barChartInstance = null;
 
     document.addEventListener('DOMContentLoaded', () => {
         const today = new Date();
@@ -500,12 +511,26 @@
         const type = document.getElementById('type').value;
         const selectCat = document.getElementById('category');
         selectCat.innerHTML = '';
-        categories[type].forEach(cat => {
+        customCategories[type].forEach(cat => {
             const opt = document.createElement('option');
             opt.value = cat;
             opt.textContent = cat;
             selectCat.appendChild(opt);
         });
+    }
+
+    function addNewCategory() {
+        const type = document.getElementById('type').value;
+        const newCat = prompt(`Digite o nome da nova categoria de ${type.toUpperCase()}:`);
+        if (newCat && newCat.trim() !== '') {
+            const formattedCat = newCat.trim();
+            if (!customCategories[type].includes(formattedCat)) {
+                customCategories[type].push(formattedCat);
+                localStorage.setItem('apple_finance_categories', JSON.stringify(customCategories));
+                updateCategories();
+                document.getElementById('category').value = formattedCat;
+            }
+        }
     }
 
     function addTransaction(e) {
@@ -519,7 +544,6 @@
         const isFixed = document.getElementById('isFixed').checked;
         const installments = parseInt(document.getElementById('installments').value) || 1;
 
-        // Se a data do lançamento for hoje ou retroativa, já entra como PAGO. Se for futura, PENDENTE.
         const todayStr = new Date().toISOString().split('T')[0];
         const initialStatus = (date <= todayStr) ? 'pago' : 'pendente';
 
@@ -595,15 +619,12 @@
         const todayStr = new Date().toISOString().split('T')[0];
 
         currentData.forEach(t => {
-            // Contabiliza no saldo real apenas o que está PAGO
             if (t.status === 'pago') {
                 if (t.type === 'receita') incReal += t.amount;
                 if (t.type === 'despesa') expReal += t.amount;
             }
-            // Para o gráfico/resumo do carro, considera gastos do mês
             if (t.type === 'despesa' && t.category === 'Carro') carExp += t.amount;
 
-            // Define badge visual do status
             let statusClass = t.status;
             let statusLabel = (t.status === 'pago') ? '✓ Pago' : '⏳ Pendente';
 
@@ -655,7 +676,7 @@
                 labels: Object.keys(categoriesMap),
                 datasets: [{
                     data: Object.values(categoriesMap),
-                    backgroundColor: ['#ff9500', '#ff3b30', '#007aff', '#af52de', '#34c759', '#86868b', '#5856d6'],
+                    backgroundColor: ['#ff9500', '#ff3b30', '#007aff', '#af52de', '#34c759', '#86868b', '#5856d6', '#ff2d55'],
                     borderWidth: 0
                 }]
             },
